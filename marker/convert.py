@@ -30,8 +30,22 @@ from marker.cleaners.text import cleanup_text
 from marker.images.extract import extract_images
 from marker.images.save import images_to_dict
 
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple, Optional, Any
 from marker.settings import settings
+
+
+def extract_metadata(doc: pdfium.PdfDocument) -> Dict:
+    metadata = {}
+    meta_tags = [
+        'Title', 'Author', 'Subject', 'Keywords', 'Creator', 'Producer',
+        'CreationDate', 'ModDate'
+    ]
+    for tag in meta_tags:
+        value = doc.get_metadata_value(tag)
+        if value:
+            metadata[tag] = value
+
+    return metadata
 
 
 def convert_single_pdf(
@@ -42,7 +56,7 @@ def convert_single_pdf(
         metadata: Optional[Dict] = None,
         langs: Optional[List[str]] = None,
         batch_multiplier: int = 1
-) -> Tuple[str, Dict[str, Image.Image], Dict]:
+) -> Tuple[Any, str, Dict[str, Image.Image], Dict]:
     # Set language needed for OCR
     if langs is None:
         langs = [settings.DEFAULT_LANG]
@@ -67,6 +81,11 @@ def convert_single_pdf(
 
     # Get initial text blocks from the pdf
     doc = pdfium.PdfDocument(fname)
+
+    # Extract metadata
+    pdf_metadata = extract_metadata(doc)
+    out_meta["pdf_metadata"] = pdf_metadata
+
     pages, toc = get_text_blocks(
         doc,
         fname,

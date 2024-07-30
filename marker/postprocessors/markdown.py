@@ -138,12 +138,13 @@ def block_separator(line1, line2, block_type1, block_type2):
     return sep + line2
 
 
-def merge_lines(blocks: List[List[MergedBlock]]):
+def merge_lines(blocks: List[List[MergedBlock]]) -> List[FullyMergedBlock]:
     text_blocks = []
     prev_type = None
     prev_line = None
     block_text = ""
     block_type = ""
+    current_pnums = []
 
     for idx, page in enumerate(blocks):
         for block in page:
@@ -152,12 +153,16 @@ def merge_lines(blocks: List[List[MergedBlock]]):
                 text_blocks.append(
                     FullyMergedBlock(
                         text=block_surround(block_text, prev_type),
-                        block_type=prev_type
+                        block_type=prev_type,
+                        pnum=current_pnums
                     )
                 )
                 block_text = ""
+                current_pnums = []  # Reset the page numbers list
 
             prev_type = block_type
+            if block.pnum not in current_pnums:
+                current_pnums.append(block.pnum)
             # Join lines in the block together properly
             for i, line in enumerate(block.lines):
                 line_height = line.bbox[3] - line.bbox[1]
@@ -171,13 +176,14 @@ def merge_lines(blocks: List[List[MergedBlock]]):
                     block_text = line.text
 
         if settings.PAGINATE_OUTPUT and idx < len(blocks) - 1:
-            block_text += "\n\n" + "-" * 16 + "\n\n" # Page separator horizontal rule
+            block_text += "\n\n" + "[ Page Number: " + str(block.pnum) + "]" + "-" * 17 + "\n\n"  # Page separator horizontal rule
 
     # Append the final block
     text_blocks.append(
         FullyMergedBlock(
             text=block_surround(block_text, prev_type),
-            block_type=block_type
+            block_type=block_type,
+            pnum=current_pnums
         )
     )
     return text_blocks

@@ -115,9 +115,3 @@ def edit_full_text(text: str, model: Optional[T5ForTokenClassification], batch_m
 
     out_text = "".join(out_text)
     return out_text, edit_stats
-
-
-
-
-
-

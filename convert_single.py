@@ -5,6 +5,7 @@ import os
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1" # For some reason, transformers decided to use .isin for a simple op, which is not supported on MPS
 
 import argparse
+import json
 from marker.convert import convert_single_pdf
 from marker.logger import configure_logging
 from marker.models import load_all_models
@@ -33,7 +34,7 @@ def main():
     full_text, images, out_meta = convert_single_pdf(fname, model_lst, max_pages=args.max_pages, langs=langs, batch_multiplier=args.batch_multiplier, start_page=args.start_page)
 
     fname = os.path.basename(fname)
-    subfolder_path = save_markdown(args.output, fname, full_text, images, out_meta)
+    subfolder_path = save_markdown(args.output, fname, full_text, images, out_meta, image_cutoff=500)
 
     print(f"Saved markdown to the {subfolder_path} folder")
     if args.debug:

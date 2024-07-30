@@ -20,7 +20,7 @@ def markdown_exists(out_folder, fname):
     return os.path.exists(out_filename)
 
 
-def save_markdown(out_folder, fname, full_text, images, out_metadata):
+def save_markdown(out_folder, fname, full_text, images, out_metadata, image_cutoff: int = 500):
     subfolder_path = get_subfolder_path(out_folder, fname)
     os.makedirs(subfolder_path, exist_ok=True)
 
@@ -33,7 +33,9 @@ def save_markdown(out_folder, fname, full_text, images, out_metadata):
         f.write(json.dumps(out_metadata, indent=4))
 
     for filename, image in images.items():
-        image_filepath = os.path.join(subfolder_path, filename)
-        image.save(image_filepath, "PNG")
+        # print if the image is more than 500 pixels
+        if image.width > image_cutoff or image.height > image_cutoff:
+            image_filepath = os.path.join(subfolder_path, filename)
+            image.save(image_filepath, "PNG")
 
     return subfolder_path
