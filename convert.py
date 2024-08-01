@@ -81,8 +81,9 @@ def main():
 
     in_folder = os.path.abspath(args.in_folder)
     out_folder = os.path.abspath(args.out_folder)
-    files = [os.path.join(in_folder, f) for f in os.listdir(in_folder)]
+    files = [os.path.join(in_folder, f) for f in os.listdir(in_folder) if os.path.basename(f).split(".")[0] not in os.listdir(out_folder)]
     files = [f for f in files if os.path.isfile(f)]
+    print(f"Processing {len(files)} files")
     os.makedirs(out_folder, exist_ok=True)
 
     # Handle chunks if we're processing in parallel
