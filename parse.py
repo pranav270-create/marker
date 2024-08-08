@@ -1,5 +1,4 @@
 import modal
-from modal import Function, Mount, asgi_app, Image
 from modal import App, build, enter, method, web_endpoint, method
 
 from marker.convert import convert_single_pdf
@@ -60,7 +59,7 @@ class ParseRequest(BaseModel):
     start_page: int
 
 
-@app.cls(gpu="any", image=image, concurrency_limit=100, keep_warm=0, allow_concurrent_inputs=1, container_idle_timeout=5 * MINUTES, timeout=24 * HOURS)
+@app.cls(gpu="any", image=image, concurrency_limit=5, keep_warm=0, allow_concurrent_inputs=2, container_idle_timeout=5 * MINUTES, timeout=24 * HOURS)
 class Model:
     model_list: List = None
 
@@ -81,4 +80,4 @@ class Model:
 
         full_text, images, out_meta = convert_single_pdf(fname, self.model_list, max_pages=100, langs=["English"], batch_multiplier=1, start_page=1)
         # subfolder_path = save_markdown("./output", fname, full_text, images, out_meta, image_cutoff=500)
-        print("Result: ", full_text)
+        return {"result": full_text}

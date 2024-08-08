@@ -64,7 +64,7 @@ def setup_order_model(device=None, dtype=None):
     return model
 
 
-def load_all_models(langs=None, device=None, dtype=None, force_load_ocr=False):
+def _load_all_models(langs=None, device=None, dtype=None, force_load_ocr=False):
     if device is not None:
         assert dtype is not None, "Must provide dtype if device is provided"
 
@@ -78,4 +78,40 @@ def load_all_models(langs=None, device=None, dtype=None, force_load_ocr=False):
     ocr = setup_recognition_model(langs, device, dtype)
     texify = setup_texify_model(device, dtype)
     model_lst = [texify, layout, order, edit, detection, ocr]
+    return model_lst
+
+
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+
+def load_all_models(langs=None, device=None, dtype=None, force_load_ocr=False):
+    if device is not None:
+        assert dtype is not None, "Must provide dtype if device is provided"
+
+    def load_models_concurrently(load_functions_map: dict) -> dict:
+        model_id_to_model = {}
+        with ThreadPoolExecutor(max_workers=len(load_functions_map)) as executor:
+            future_to_model_id = {
+                executor.submit(load_fn): model_id
+                for model_id, load_fn in load_functions_map.items()
+            }
+            for future in as_completed(future_to_model_id.keys()):
+                model_id_to_model[future_to_model_id[future]] = future.result()
+        return model_id_to_model
+
+    # Define load functions for each model
+    load_functions = {
+        "detection": lambda: setup_detection_model(device, dtype),
+        "layout": lambda: setup_layout_model(device, dtype),
+        "order": lambda: setup_order_model(device, dtype),
+        "edit": lambda: load_editing_model(device, dtype),
+        "ocr": lambda: setup_recognition_model(langs, device, dtype),
+        "texify": lambda: setup_texify_model(device, dtype)
+    }
+
+    # Load models concurrently
+    models = load_models_concurrently(load_functions)
+
+    # Return the models in the original order
+    model_lst = [models["texify"], models["layout"], models["order"], models["edit"], models["detection"], models["ocr"]]
     return model_lst
