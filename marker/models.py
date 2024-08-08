@@ -112,6 +112,14 @@ def load_all_models(langs=None, device=None, dtype=None, force_load_ocr=False):
     # Load models concurrently
     models = load_models_concurrently(load_functions)
 
+    def convert_to_half(model):
+        for param in model.parameters():
+            param.data = param.data.half()
+            if param._grad is not None:
+                param._grad.data = param._grad.data.half()
+        return model
+
     # Return the models in the original order
     model_lst = [models["texify"], models["layout"], models["order"], models["edit"], models["detection"], models["ocr"]]
+    model_lst = [convert_to_half(model) if model is not None else model for model in model_lst]
     return model_lst

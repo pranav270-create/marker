@@ -97,7 +97,7 @@ class Settings(BaseSettings):
     @property
     def MODEL_DTYPE(self) -> torch.dtype:
         if self.TORCH_DEVICE_MODEL == "cuda":
-            return torch.bfloat16
+            return torch.float16
         else:
             return torch.float32
 
